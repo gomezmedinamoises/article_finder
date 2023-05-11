@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_demo/data/rw_client.dart';
+import 'package:rxdart/rxdart.dart';
 
 import '../data/article.dart';
 import 'bloc.dart';
@@ -20,7 +21,13 @@ class ArticleListBloc implements Bloc {
   ArticleListBloc() {
     // Process input queries sink and build an output stream with an article's list
     articlesStream = _searchQueryController.stream
-        .asyncMap((query) => _client.fetchArticles(query));
+        .startWith(null) // Produces an empty query to start loading all articles
+        .debounceTime(const Duration(milliseconds: 100))
+        .switchMap(
+          (query) => _client.fetchArticles(query)
+            .asStream() // Convert Future to Stream
+            .startWith(null) // Send a null event to the article output at the start of every request
+        );
   }
 
 // Cleanup method to close the StreamController

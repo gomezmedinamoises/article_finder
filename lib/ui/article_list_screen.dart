@@ -1,3 +1,5 @@
+import 'package:bloc_demo/bloc/article_detail_bloc.dart';
+import 'package:bloc_demo/ui/article_detail_screen.dart';
 import 'package:bloc_demo/ui/article_list_item.dart';
 import 'package:flutter/material.dart';
 
@@ -5,8 +7,32 @@ import '../bloc/article_list_bloc.dart';
 import '../bloc/bloc_provider.dart';
 import '../data/article.dart';
 
-class ArticleListScreen extends StatelessWidget {
+class ArticleListScreen extends StatefulWidget {
   const ArticleListScreen({super.key});
+
+  @override
+  State<ArticleListScreen> createState() => _ArticleListScreenState();
+}
+
+class _ArticleListScreenState extends State<ArticleListScreen>
+    with TickerProviderStateMixin {
+  late AnimationController animationController;
+
+  @override
+  void initState() {
+    animationController = AnimationController(vsync: this, duration: const Duration(seconds: 10))
+      ..addListener(() {
+        setState(() {});
+      });
+    animationController.repeat(reverse: true);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +71,16 @@ class ArticleListScreen extends StatelessWidget {
         // If there is a list, but empty, No Results messages is displayed
         final results = snapshot.data;
         if (results == null) {
-          return const Center(child: Text('Loading...'));
+          return Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                LinearProgressIndicator(value: animationController.value),
+              ],
+            ),
+          );
+          //return const Center(child: Text('Loading...'));
         } else if (results.isEmpty) {
           return const Center(child: Text('No Results...'));
         }
@@ -66,11 +101,16 @@ class ArticleListScreen extends StatelessWidget {
 
             // This widget shows details of articles in the list
             child: ArticleListItem(article: article),
-            ),
-            onTap: () {
-
-              // Redirect user to an article's details page
-            },
+          ),
+          onTap: () {
+            // Redirect user to an article's details page
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => BlocProvider(
+                        bloc: ArticleDetailBloc(id: article.id),
+                        child: const ArticleDetailScreen())));
+          },
         );
       },
     );
